@@ -18,10 +18,21 @@ export async function onRequestGet(context) {
   let data = null;
   let version = 1;
 
-  if (row && row.data) {
+  if (row && row.data && row.data.startsWith('{')) {
     try {
       data = JSON.parse(row.data);
       version = row.version || 1;
+    } catch (e) {}
+  }
+
+  // If D1 data is empty or invalid, fallback to defaults.json directly from site origin
+  if (!data || !data.settings) {
+    try {
+      const url = new URL(request.url);
+      const defRes = await fetch(`${url.origin}/defaults.json`);
+      if (defRes.ok) {
+        data = await defRes.json();
+      }
     } catch (e) {}
   }
 
